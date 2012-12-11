@@ -1,0 +1,207 @@
+!!! 5
+html(xmlns:fb="http://ogp.me/ns/fb#",lang="en")
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes')
+    title= app.name
+    link(rel='stylesheet', href='stylesheets/screen.css', media='Screen', type='text/css')
+    link(rel='stylesheet', href='stylesheets/mobile.css', media='handheld, only screen and (max-width: 480px), only screen and (max-device-width: 480px)', type='text/css')
+    //if IEMobile
+        link(rel='stylesheet', href='mobile.css', media='screen', type='text/css')
+    // These are Open Graph tags.  They add meta data to your  
+    // site that facebook uses when your content is shared     
+    // over facebook.  You should fill these tags in with      
+    // your data.  To learn more about Open Graph, visit       
+    // 'https://developers.facebook.com/docs/opengraph/'       
+    meta(property='og:title', content='#{app.name}')
+    meta(property='og:type', content='website')
+    meta(property='og:url', content='#{url()}')
+    meta(property='og:image', content='#{url("logo.png")}')
+    meta(property='og:site_name', content='#{app.name}')
+    meta(property='og:description', content='My first app')
+    meta(property='fb:app_id', content='#{app.id}')
+    script(type='text/javascript', src='/scripts/jquery.min.js')
+    script(type='text/javascript')
+      function logResponse(response) {
+        if (console && console.log) {
+          console.log('The response was', response);
+        }
+      }
+
+      $(function(){
+        // Set up so we handle click on the buttons
+        $('#postToWall').click(function() {
+          FB.ui(
+            {
+              method : 'feed',
+              link   : $(this).attr('data-url')
+            },
+            function (response) {
+              // If response is null the user canceled the dialog
+              if (response != null) {
+                logResponse(response);
+              }
+            }
+          );
+        });
+
+        $('#sendToFriends').click(function() {
+          FB.ui(
+            {
+              method : 'send',
+              link   : $(this).attr('data-url')
+            },
+            function (response) {
+              // If response is null the user canceled the dialog
+              if (response != null) {
+                logResponse(response);
+              }
+            }
+          );
+        });
+
+        $('#sendRequest').click(function() {
+          FB.ui(
+            {
+              method  : 'apprequests',
+              message : $(this).attr('data-message')
+            },
+            function (response) {
+              // If response is null the user canceled the dialog
+              if (response != null) {
+                logResponse(response);
+              }
+            }
+          );
+        });
+      });
+    //if IE
+        script(type='text/javascript')
+          var tags = ['header', 'section'];
+          while(tags.length)
+            document.createElement(tags.pop());
+
+  body
+    #fb-root
+    script(type='text/javascript')
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '#{app.id}', // App ID
+          channelUrl : '#{url_no_scheme("channel.html")}', // Channel File
+          status     : true, // check login status
+          cookie     : true, // enable cookies to allow the server to access the session
+          xfbml      : true // parse XFBML
+        });
+        // Listen to the auth.login which will be called when the user logs in
+        // using the Login button
+        FB.Event.subscribe('auth.login', function(response) {
+          // We want to reload the page now so PHP can read the cookie that the
+          // Javascript SDK sat. But we don't want to use
+          // window.location.reload() because if this is in a canvas there was a
+          // post made to this page and a reload will trigger a message to the
+          // user asking if they want to send data again.
+          window.location = window.location;
+        });
+        FB.Canvas.setAutoGrow();
+      };
+      // Load the SDK Asynchronously
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+
+    header.clearfix
+      if user
+        p#picture(style='background-image: url(https://graph.facebook.com/#{user.id}/picture?type=normal)')
+        div
+          h1
+            | Welcome,
+            strong #{user.name}
+          p.tagline
+            | This is my app, I can edit it all I Want.
+            a(href='#{app.link}', target='_top') #{app.name}
+          #share-app
+            p Share your app:
+            ul
+              li
+                a#postToWall.facebook-button(href='#', data-url='#{url()}')
+                  span.plus Post to Wall
+              li
+                a#sendToFriends.facebook-button.speech-bubble(href='#', data-url='#{url()}')
+                  span.speech-bubble Send Message
+              li
+                a#sendRequest.facebook-button.apprequests(href='#', data-message='Test this awesome app')
+                  span.apprequests Send Requests
+      else
+        div
+          h1 Welcome
+          .fb-login-button(data-scope='user_likes,user_photos')
+
+    section#get-started
+      p
+        | Welcome to your Facebook app, running on
+        span heroku
+        | !
+      a.button(href='https://devcenter.heroku.com/articles/facebook', target='_top') Learn How to Edit This App
+
+    if user
+      section#samples.clearfix
+        h1 Examples of the Facebook Graph API
+        .list
+          h3 A few of your friends
+          ul#friends.friends
+            for friend in req.friends
+              li
+                a(href='https://www.facebook.com/#{friend.id}', target='_top')
+                  img(src='https://graph.facebook.com/#{friend.id}/picture?type=square', alt='#{friend.name}')
+                  | #{friend.name}
+        .list.inline
+          h3 Recent photos
+          ul#photos.photos
+            for photo in req.photos
+              li(style='background-image: url("#{photo.picture}")', class="#{photo.link}")
+                a(href='#{photo.link}', target="_top")
+        .list
+          h3 Things you like
+          ul#likes.things
+            for like in req.likes
+              li
+                a(href='https://www.facebook.com/#{like.id}', target='_top')
+                  img(src='https://graph.facebook.com/#{like.id}/picture?type=square', alt='#{like.name}')
+                  | #{like.name}
+        .list
+          h3 Friends using this app
+          ul#friends_using_app.friends
+            for friend in req.friends_using_app
+              li
+                a(href='https://www.facebook.com/#{friend.id}', target='_top')
+                  img(src='https://graph.facebook.com/#{friend.id}/picture?type=square', alt='#{friend.name}')
+                  | #{friend.name}
+
+    section#guides.clearfix
+      h1 Learn More About Heroku & Facebook Apps
+      ul
+        li
+          a.icon.heroku(href='https://www.heroku.com/?utm_source=facebook&utm_medium=app&utm_campaign=fb_integration', target='_top') Heroku
+          p
+            | Learn more about
+            a(href='https://www.heroku.com/?utm_source=facebook&utm_medium=app&utm_campaign=fb_integration', target='_top') Heroku
+            | , or read developer docs in the Heroku
+            a(href='https://devcenter.heroku.com/', target='_top') Dev Center
+            | .
+        li
+          a.icon.websites(href='https://developers.facebook.com/docs/guides/web/', target='_top') Websites
+          p
+            | Drive growth and engagement on your site with
+            | Facebook Login and Social Plugins.
+        li
+          a.icon.mobile-apps(href='https://developers.facebook.com/docs/guides/mobile/', target='_top') Mobile Apps
+          p
+            | Integrate with our core experience by building apps
+            | that operate within Facebook.
+        li
+          a.icon.apps-on-facebook(href='https://developers.facebook.com/docs/guides/canvas/', target='_top') Apps on Facebook
+          p Let users find and connect to their friends in mobile apps and games.
